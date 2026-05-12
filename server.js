@@ -15,6 +15,13 @@ app.get('/api/datetime', (req, res) => {
   });
 });
 
+app.get('/api/client-info', (req, res) => {
+  const ip = req.headers['x-forwarded-for']
+    ? req.headers['x-forwarded-for'].split(',')[0].trim()
+    : req.socket.remoteAddress;
+  res.json({ ip });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

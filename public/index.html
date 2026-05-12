@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Date & Time</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .clock-card {
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.95);
+    }
+    .time-display {
+      font-size: 4rem;
+      font-weight: 700;
+      font-family: 'Courier New', monospace;
+      color: #764ba2;
+    }
+    .date-display {
+      font-size: 1.5rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="card clock-card shadow-lg p-5 text-center" style="max-width: 600px; width: 100%;">
+      <h1 class="mb-4 text-primary">Current Date & Time</h1>
+      <div id="time" class="time-display">--:--:--</div>
+      <div id="date" class="date-display mt-3">Loading...</div>
+      <button id="refresh" class="btn btn-primary mt-4">Refresh from Server</button>
+      <small class="text-muted mt-3">Updates every second from the browser clock.</small>
+    </div>
+  </div>
+
+  <script>
+    function updateLocal() {
+      const now = new Date();
+      document.getElementById('time').textContent = now.toLocaleTimeString();
+      document.getElementById('date').textContent = now.toDateString();
+    }
+
+    async function fetchFromServer() {
+      try {
+        const res = await fetch('/api/datetime');
+        const data = await res.json();
+        document.getElementById('time').textContent = data.time;
+        document.getElementById('date').textContent = data.date;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', fetchFromServer);
+    updateLocal();
+    setInterval(updateLocal, 1000);
+  </script>
+</body>
+</html>

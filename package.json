@@ -1,0 +1,12 @@
+{
+  "name": "datetime-app",
+  "version": "1.0.0",
+  "description": "Simple Node.js app to display date and time using Bootstrap",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

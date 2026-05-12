@@ -85,7 +85,7 @@ This application uses the [Azure Maps Weather Service](https://learn.microsoft.c
 npm test
 ```
 
-Tests use [Jest](https://jestjs.io/) and [Supertest](https://github.com/ladakh/supertest) to validate the API endpoints.
+Tests use [Jest](https://jestjs.io/) and [Supertest](https://github.com/ladjs/supertest) to validate the API endpoints.
 
 ## License
 

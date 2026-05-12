@@ -62,14 +62,17 @@
 </head>
 <body>
   <div class="container">
+    <!-- First tile: Client IP + Local Date & Time -->
     <div class="card clock-card shadow-lg p-4 text-center mb-4 mx-auto" style="max-width: 700px;">
-      <h1 class="mb-3 text-primary">Current Date & Time (Local)</h1>
+      <h1 class="mb-3 text-primary">Your Local Date &amp; Time</h1>
+      <div class="mb-2"><span class="badge bg-secondary fs-6" id="client-ip">Detecting IP...</span></div>
       <div id="time" class="time-display">--:--:--</div>
       <div id="date" class="date-display mt-2">Loading...</div>
       <button id="refresh" class="btn btn-primary mt-3 mx-auto" style="max-width: 250px;">Refresh from Server</button>
       <small class="text-muted mt-2">Updates every second from the browser clock.</small>
     </div>
 
+    <!-- Remaining cards at the bottom -->
     <h2 class="text-white text-center mb-4">World Clocks</h2>
     <div class="row g-4" id="world-clocks"></div>
   </div>
@@ -134,6 +137,17 @@
     buildCards();
     updateAll();
     setInterval(updateAll, 1000);
+
+    // Fetch and display client IP address
+    (async function detectIP() {
+      try {
+        const res = await fetch('/api/client-info');
+        const data = await res.json();
+        document.getElementById('client-ip').textContent = 'Your IP: ' + data.ip;
+      } catch (err) {
+        document.getElementById('client-ip').textContent = 'IP unavailable';
+      }
+    })();
   </script>
 </body>
 </html>

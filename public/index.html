@@ -37,7 +37,7 @@
       transform: translateY(-5px);
     }
     .country-flag {
-      font-size: 3rem;
+      font-size: 1.5rem;
     }
     .country-time {
       font-size: 1.8rem;
@@ -50,7 +50,8 @@
       color: #666;
     }
     .country-name {
-      font-weight: 600;
+      font-size: 1.25rem;
+      font-weight: 700;
       color: #333;
     }
     .country-tz {
@@ -87,8 +88,8 @@
       container.innerHTML = countries.map((c, i) => `
         <div class="col-12 col-sm-6 col-lg-4">
           <div class="card country-card shadow p-3 text-center">
-            <div class="country-flag">${c.flag}</div>
             <div class="country-name mt-2">${c.name}</div>
+            <div class="country-flag">${c.flag}</div>
             <div class="country-tz">${c.tz}</div>
             <div class="country-time mt-2" id="time-${i}">--:--:--</div>
             <div class="country-date" id="date-${i}">--</div>

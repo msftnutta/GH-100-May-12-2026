@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>World Clock</title>
+  <title>World Clock &amp; Weather</title>
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -37,8 +37,31 @@
       transform: translateY(-5px);
     }
     .country-flag {
-      font-size: 1.5rem;
+      font-size: 2rem;
+      line-height: 1;
     }
+    .current-weather {
+      font-size: 1rem;
+      color: #333;
+      margin-top: 0.5rem;
+    }
+    .current-weather .weather-emoji { font-size: 1.6rem; }
+    .forecast {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.25rem;
+      margin-top: 0.75rem;
+      border-top: 1px solid #eee;
+      padding-top: 0.5rem;
+    }
+    .forecast-day {
+      flex: 1;
+      font-size: 0.75rem;
+      color: #444;
+    }
+    .forecast-day .weather-emoji { font-size: 1.25rem; display: block; }
+    .forecast-day .dow { font-weight: 600; color: #555; }
+    .forecast-day .temps { color: #666; }
     .country-time {
       font-size: 1.8rem;
       font-weight: 700;
@@ -73,29 +96,48 @@
     </div>
 
     <!-- Remaining cards at the bottom -->
-    <h2 class="text-white text-center mb-4">World Clocks</h2>
+    <h2 class="text-white text-center mb-4">World Clocks &amp; Weather</h2>
     <div class="row g-4" id="world-clocks"></div>
   </div>
 
   <script>
     const countries = [
-      { name: 'Australia (Melbourne)', flag: '🇦🇺', tz: 'Australia/Melbourne' },
-      { name: 'Singapore',             flag: '🇸🇬', tz: 'Asia/Singapore' },
-      { name: 'Thailand',              flag: '🇹🇭', tz: 'Asia/Bangkok' },
-      { name: 'India',                 flag: '🇮🇳', tz: 'Asia/Kolkata' },
-      { name: 'United Kingdom',        flag: '🇬🇧', tz: 'Europe/London' }
+      { name: 'Australia (Melbourne)', flag: '🇦🇺', tz: 'Australia/Melbourne', lat: -37.8136, lon: 144.9631 },
+      { name: 'Singapore',             flag: '🇸🇬', tz: 'Asia/Singapore',      lat:   1.3521, lon: 103.8198 },
+      { name: 'Thailand',              flag: '🇹🇭', tz: 'Asia/Bangkok',        lat:  13.7563, lon: 100.5018 },
+      { name: 'India',                 flag: '🇮🇳', tz: 'Asia/Kolkata',        lat:  28.6139, lon:  77.2090 },
+      { name: 'United Kingdom',        flag: '🇬🇧', tz: 'Europe/London',       lat:  51.5074, lon:  -0.1278 }
     ];
+
+    // Map Azure Maps weather iconCode (1-44) to an emoji.
+    // https://learn.microsoft.com/azure/azure-maps/weather-services-concepts#weather-icons
+    const iconEmoji = {
+      1:'☀️', 2:'🌤️', 3:'🌤️', 4:'⛅', 5:'🌥️', 6:'🌥️', 7:'☁️', 8:'☁️',
+      11:'🌫️', 12:'🌦️', 13:'🌦️', 14:'🌦️',
+      15:'⛈️', 16:'⛈️', 17:'⛈️',
+      18:'🌧️', 19:'🌨️', 20:'🌨️', 21:'🌨️',
+      22:'❄️', 23:'❄️', 24:'🧊', 25:'🌧️', 26:'🌧️', 29:'🌨️',
+      30:'🥵', 31:'🥶', 32:'🌬️',
+      33:'🌙', 34:'🌙', 35:'☁️', 36:'☁️', 37:'☁️', 38:'☁️',
+      39:'🌧️', 40:'🌧️', 41:'⛈️', 42:'⛈️', 43:'🌨️', 44:'🌨️'
+    };
+    const emojiFor = (code) => iconEmoji[code] || '❓';
 
     function buildCards() {
       const container = document.getElementById('world-clocks');
       container.innerHTML = countries.map((c, i) => `
         <div class="col-12 col-sm-6 col-lg-4">
           <div class="card country-card shadow p-3 text-center">
-            <div class="country-name mt-2">${c.name}</div>
             <div class="country-flag">${c.flag}</div>
+            <div class="country-name mt-1">${c.name}</div>
             <div class="country-tz">${c.tz}</div>
             <div class="country-time mt-2" id="time-${i}">--:--:--</div>
             <div class="country-date" id="date-${i}">--</div>
+            <div class="current-weather" id="weather-${i}">
+              <span class="weather-emoji">⏳</span>
+              <span class="weather-text">Loading weather...</span>
+            </div>
+            <div class="forecast" id="forecast-${i}"></div>
           </div>
         </div>
       `).join('');
@@ -133,10 +175,54 @@
       }
     }
 
-    document.getElementById('refresh').addEventListener('click', fetchFromServer);
+    async function loadWeather() {
+      await Promise.all(countries.map(async (c, i) => {
+        const weatherEl = document.getElementById(`weather-${i}`);
+        const forecastEl = document.getElementById(`forecast-${i}`);
+        try {
+          const res = await fetch(`/api/weather?lat=${c.lat}&lon=${c.lon}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+
+          if (data.current) {
+            const { phrase, iconCode, temperature, unit } = data.current;
+            weatherEl.innerHTML = `
+              <span class="weather-emoji">${emojiFor(iconCode)}</span>
+              <span class="weather-text">${phrase ?? ''} ${temperature ?? '--'}°${unit ?? ''}</span>
+            `;
+          } else {
+            weatherEl.innerHTML = `<span class="weather-text text-muted">No current data</span>`;
+          }
+
+          forecastEl.innerHTML = (data.forecast || []).map((f) => {
+            const dow = new Date(f.date).toLocaleDateString('en-US', { weekday: 'short' });
+            const min = (f.minTemp ?? f.minTemp === 0) ? Math.round(f.minTemp) : '--';
+            const max = (f.maxTemp ?? f.maxTemp === 0) ? Math.round(f.maxTemp) : '--';
+            return `
+              <div class="forecast-day" title="${(f.phrase ?? '').replace(/"/g,'&quot;')}">
+                <div class="dow">${c.flag} ${dow}</div>
+                <span class="weather-emoji">${emojiFor(f.iconCode)}</span>
+                <div class="temps">${min}° / ${max}°${f.unit ?? ''}</div>
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error('Weather load failed for', c.name, err);
+          weatherEl.innerHTML = `<span class="weather-text text-danger">Weather unavailable</span>`;
+          forecastEl.innerHTML = '';
+        }
+      }));
+    }
+
+    document.getElementById('refresh').addEventListener('click', () => {
+      fetchFromServer();
+      loadWeather();
+    });
     buildCards();
     updateAll();
     setInterval(updateAll, 1000);
+    loadWeather();
+    setInterval(loadWeather, 15 * 60 * 1000);
 
     // Fetch and display client IP address
     (async function detectIP() {

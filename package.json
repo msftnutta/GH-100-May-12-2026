@@ -8,6 +8,7 @@
     "test": "jest --forceExit --detectOpenHandles"
   },
   "dependencies": {
+    "dotenv": "^16.6.1",
     "express": "^4.19.2"
   },
   "devDependencies": {
